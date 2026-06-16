@@ -185,7 +185,7 @@ class Database:
         upload_db_to_s3()
         return new_balance
 
-    async def leaderboard(self, limit: int = 10) -> list[tuple[int, int]]:
+        async def leaderboard(self, limit: int = 10) -> list[tuple[int, int]]:
         async with aiosqlite.connect(self.path) as db:
             async with db.execute(
                 """
@@ -198,65 +198,93 @@ class Database:
             ) as cursor:
                 return await cursor.fetchall()
 
-        def _row_to_settings(self, guild_id: int, row: tuple | None) -> GuildSettings:
-            if row is None:
-                return GuildSettings(guild_id=guild_id)
-            return GuildSettings(
-                guild_id=guild_id,
-                prefix=row[0] or DEFAULT_PREFIX,
-                log_channel_id=row[1],
-                coinflip_house_edge=max(0, min(10, row[2] or 0)),
-                log_member_events=bool(row[3]),
-                log_message_events=bool(row[4]),
-                log_mod_events=bool(row[5]),
-                log_game_events=bool(row[6]),
-                casino_enabled=bool(row[7]),
-            )
+    def _row_to_settings(self, guild_id: int, row: tuple | None) -> GuildSettings:
+        if row is None:
+            return GuildSettings(guild_id=guild_id)
+
+        return GuildSettings(
+            guild_id=guild_id,
+            prefix=row[0] or DEFAULT_PREFIX,
+            log_channel_id=row[1],
+            coinflip_house_edge=max(0, min(10, row[2] or 0)),
+            log_member_events=bool(row[3]),
+            log_message_events=bool(row[4]),
+            log_mod_events=bool(row[5]),
+            log_game_events=bool(row[6]),
+            casino_enabled=bool(row[7]),
+        )
 
     async def get_guild_settings(self, guild_id: int) -> GuildSettings:
         async with aiosqlite.connect(self.path) as db:
             async with db.execute(
                 """
                 SELECT prefix, log_channel_id, coinflip_house_edge,
-                log_member_events, log_message_events,
-                log_mod_events, log_game_events, casino_enabled
+                       log_member_events, log_message_events,
+                       log_mod_events, log_game_events, casino_enabled
                 FROM guild_settings
                 WHERE guild_id = ?
                 """,
                 (guild_id,),
             ) as cursor:
                 row = await cursor.fetchone()
-                return self._row_to_settings(guild_id, row)
 
-    async def update_guild_settings(self, guild_id: int, **kwargs: object) -> GuildSettings:
+        return self._row_to_settings(guild_id, row)
+
+    async def update_guild_settings(
+        self,
+        guild_id: int,
+        **kwargs: object
+    ) -> GuildSettings:
         current = await self.get_guild_settings(guild_id)
+
         data = {
             "prefix": kwargs.get("prefix", current.prefix),
             "log_channel_id": kwargs.get("log_channel_id", current.log_channel_id),
-            "coinflip_house_edge": kwargs.get("coinflip_house_edge", current.coinflip_house_edge),
-            "log_member_events": int(kwargs.get("log_member_events", current.log_member_events)),
-            "log_message_events": int(kwargs.get("log_message_events", current.log_message_events)),
-            "log_mod_events": int(kwargs.get("log_mod_events", current.log_mod_events)),
-            "log_game_events": int(kwargs.get("log_game_events", current.log_game_events)),
-            "casino_enabled": int(kwargs.get("casino_enabled", current.casino_enabled)),
+            "coinflip_house_edge": kwargs.get(
+                "coinflip_house_edge",
+                current.coinflip_house_edge,
+            ),
+            "log_member_events": int(
+                kwargs.get("log_member_events", current.log_member_events)
+            ),
+            "log_message_events": int(
+                kwargs.get("log_message_events", current.log_message_events)
+            ),
+            "log_mod_events": int(
+                kwargs.get("log_mod_events", current.log_mod_events)
+            ),
+            "log_game_events": int(
+                kwargs.get("log_game_events", current.log_game_events)
+            ),
+            "casino_enabled": int(
+                kwargs.get("casino_enabled", current.casino_enabled)
+            ),
         }
+
         async with aiosqlite.connect(self.path) as db:
             await db.execute(
                 """
                 INSERT INTO guild_settings (
-                    guild_id, prefix, log_channel_id, coinflip_house_edge,
-                    log_member_events, log_message_events, log_mod_events,
-                    log_game_events, casino_enabled
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    guild_id,
+                    prefix,
+                    log_channel_id,
+                    coinflip_house_edge,
+                    log_member_events,
+                    log_message_events,
+                    log_mod_events,
+                    log_game_events,
+                    casino_enabled
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(guild_id) DO UPDATE SET
-                prefix = excluded.prefix,
-                log_channel_id = excluded.log_channel_id,
-                coinflip_house_edge = excluded.coinflip_house_edge,
-                log_member_events = excluded.log_member_events,
-                log_message_events = excluded.log_message_events,
-                log_mod_events = excluded.log_mod_events,
-                log_game_events = excluded.log_game_events,
-                casino_enabled = excluded.casino_enabled
+                    prefix = excluded.prefix,
+                    log_channel_id = excluded.log_channel_id,
+                    coinflip_house_edge = excluded.coinflip_house_edge,
+                    log_member_events = excluded.log_member_events,
+                    log_message_events = excluded.log_message_events,
+                    log_mod_events = excluded.log_mod_events,
+                    log_game_events = excluded.log_game_events,
+                    casino_enabled = excluded.casino_enabled
                 """,
                 (
                     guild_id,
@@ -270,8 +298,9 @@ class Database:
                     data["casino_enabled"],
                 ),
             )
+
             await db.commit()
-        
-        # Guild configs updated, backup to S3
+
         upload_db_to_s3()
+
         return await self.get_guild_settings(guild_id)
