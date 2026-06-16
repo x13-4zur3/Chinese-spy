@@ -10,7 +10,7 @@ import aiosqlite
 from config import DATABASE_PATH, DEFAULT_PREFIX, STARTING_BALANCE
 
 # --- AWS S3 SYNC CONFIGURATION ---
-BUCKET_NAME = "my-casino-bot-storage-123"
+BUCKET_NAME = "my-casino-bot-storage-123" 
 DB_FILE_NAME = "casino.db"
 
 s3_client = boto3.client('s3')
@@ -54,14 +54,13 @@ class GuildSettings:
     log_mod_events: bool = True
     log_game_events: bool = True
     casino_enabled: bool = True
-
 class Database:
     def __init__(self, path: str = DATABASE_PATH):
         self.path = path
 
     # One-time startup migrations that should run exactly once per database.
     async def _apply_startup_migrations(self, db: aiosqlite.Connection) -> None:
-        async with db. execute(
+        async with db.execute(
             "SELECT value FROM app_meta WHERE key = ?",
             (BALANCE_TOPUP_MIGRATION_KEY,),
         ) as cursor:
@@ -114,7 +113,7 @@ class Database:
         # Backup the schema creation structure to S3
         upload_db_to_s3()
 
-    async def get_balance(self) -> int:
+    async def get_balance(self, user_id: int) -> int:
         async with aiosqlite.connect(self.path) as db:
             async with db.execute(
                 "SELECT balance FROM users WHERE user_id = ?",
@@ -253,27 +252,26 @@ class Database:
                 prefix = excluded.prefix,
                 log_channel_id = excluded.log_channel_id,
                 coinflip_house_edge = excluded.coinflip_house_edge,
-            coinflip_house_edge = excluded.coinflip_house_edge,
-            log_member_events = excluded.log_member_events,
-            log_message_events = excluded.log_message_events,
-            log_mod_events = excluded.log_mod_events,
-            log_game_events = excluded.log_game_events,
-            casino_enabled = excluded.casino_enabled
-            """,
-            (
-                guild_id,
-                str(data["prefix"])[:5],
-                data["log_channel_id"],
-                max(0, min(10, int(data["coinflip_house_edge"]))),
-                data["log_member_events"],
-                data["log_message_events"],
-                data["log_mod_events"],
-                data["log_game_events"],
-                data["casino_enabled"],
-            ),
-        )
-        await db.commit()
-    
-    # Guild configs updated, backup to S3
-    upload_db_to_s3()
-    return await self.get_guild_settings(guild_id)
+                log_member_events = excluded.log_member_events,
+                log_message_events = excluded.log_message_events,
+                log_mod_events = excluded.log_mod_events,
+                log_game_events = excluded.log_game_events,
+                casino_enabled = excluded.casino_enabled
+                """,
+                (
+                    guild_id,
+                    str(data["prefix"])[:5],
+                    data["log_channel_id"],
+                    max(0, min(10, int(data["coinflip_house_edge"]))),
+                    data["log_member_events"],
+                    data["log_message_events"],
+                    data["log_mod_events"],
+                    data["log_game_events"],
+                    data["casino_enabled"],
+                ),
+            )
+            await db.commit()
+        
+        # Guild configs updated, backup to S3
+        upload_db_to_s3()
+        return await self.get_guild_settings(guild_id)
