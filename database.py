@@ -199,19 +199,19 @@ class Database:
                 return await cursor.fetchall()
 
         def _row_to_settings(self, guild_id: int, row: tuple | None) -> GuildSettings:
-        if row is None:
-            return GuildSettings(guild_id=guild_id)
-        return GuildSettings(
-            guild_id=guild_id,
-            prefix=row[0] or DEFAULT_PREFIX,
-            log_channel_id=row[1],
-            coinflip_house_edge=max(0, min(10, row[2] or 0)),
-            log_member_events=bool(row[3]),
-            log_message_events=bool(row[4]),
-            log_mod_events=bool(row[5]),
-            log_game_events=bool(row[6]),
-            casino_enabled=bool(row[7]),
-        )
+            if row is None:
+                return GuildSettings(guild_id=guild_id)
+            return GuildSettings(
+                guild_id=guild_id,
+                prefix=row[0] or DEFAULT_PREFIX,
+                log_channel_id=row[1],
+                coinflip_house_edge=max(0, min(10, row[2] or 0)),
+                log_member_events=bool(row[3]),
+                log_message_events=bool(row[4]),
+                log_mod_events=bool(row[5]),
+                log_game_events=bool(row[6]),
+                casino_enabled=bool(row[7]),
+            )
 
     async def get_guild_settings(self, guild_id: int) -> GuildSettings:
         async with aiosqlite.connect(self.path) as db:
