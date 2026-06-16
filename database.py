@@ -198,7 +198,7 @@ class Database:
             ) as cursor:
                 return await cursor.fetchall()
 
-    def _row_to_settings(self, guild_id: int, row: tuple | None) -> GuildSettings:
+        def _row_to_settings(self, guild_id: int, row: tuple | None) -> GuildSettings:
         if row is None:
             return GuildSettings(guild_id=guild_id)
         return GuildSettings(
