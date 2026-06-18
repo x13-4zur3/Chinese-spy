@@ -56,7 +56,7 @@ class Economy(commands.Cog):
         self,
         ctx: commands.Context,
         member: discord.Member,
-        amount: commands.Range[int, 1, 10_000_000],
+        amount: commands.Range[int, 1, 100_000_000],
     ) -> None:
         if member.id == ctx.author.id:
             await send_reply(
