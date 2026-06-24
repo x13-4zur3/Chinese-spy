@@ -8,6 +8,9 @@ from config import DEFAULT_PREFIX, DISCORD_TOKEN, VOICE_CHANNEL_ID
 from database import Database
 
 
+# -----------------------------
+# INTENTS
+# -----------------------------
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -15,6 +18,9 @@ intents.guilds = True
 intents.moderation = True
 
 
+# -----------------------------
+# PREFIX SYSTEM
+# -----------------------------
 async def get_prefixes(bot: commands.Bot, message: discord.Message) -> list[str]:
     prefixes: list[str] = []
 
@@ -41,7 +47,7 @@ bot.db = Database()
 
 
 # -----------------------------
-# EXTENSIONS
+# LOAD EXTENSIONS
 # -----------------------------
 async def load_extensions() -> None:
     extensions = [
@@ -59,52 +65,52 @@ async def load_extensions() -> None:
 
 
 # -----------------------------
-# VOICE AUTO JOIN LOGIC
+# VOICE AUTO JOIN
 # -----------------------------
 async def connect_to_voice():
     await bot.wait_until_ready()
 
-    channel = bot.get_channel(VOICE_CHANNEL_ID)
-
-    if not channel:
-        print("❌ Voice channel not found")
-        return
-
-    if not isinstance(channel, discord.VoiceChannel):
-        print("❌ Invalid voice channel ID")
-        return
-
-    # already connected somewhere
-    if bot.voice_clients:
-        return
+    print("🔊 VC task started")
 
     try:
-        await channel.connect()
-        print(f"🔊 Joined voice channel: {channel.name}")
+        channel = await bot.fetch_channel(VOICE_CHANNEL_ID)
+        print(f"📡 Channel fetched: {channel} ({type(channel)})")
+
+        if not isinstance(channel, discord.VoiceChannel):
+            print("❌ Channel is not a voice channel")
+            return
+
+        if bot.voice_clients:
+            print("⚠️ Already connected to voice")
+            return
+
+        vc = await channel.connect()
+        print(f"✅ Joined VC: {vc.channel.name}")
+
     except Exception as e:
-        print(f"❌ Failed to join VC: {e}")
+        print(f"❌ VC ERROR: {repr(e)}")
 
 
+# -----------------------------
+# VOICE RECONNECT
+# -----------------------------
 @bot.event
 async def on_voice_state_update(member, before, after):
-    # only care about bot itself
     if bot.user is None:
         return
 
     if member.id != bot.user.id:
         return
 
-    # if disconnected, reconnect
     if after.channel is None:
-        await asyncio.sleep(3)  # small delay prevents Discord race conditions
+        await asyncio.sleep(3)
 
-        channel = bot.get_channel(VOICE_CHANNEL_ID)
-        if channel:
-            try:
-                await channel.connect()
-                print("🔁 Reconnected to VC")
-            except Exception as e:
-                print(f"Reconnect failed: {e}")
+        try:
+            channel = await bot.fetch_channel(VOICE_CHANNEL_ID)
+            await channel.connect()
+            print("🔁 Reconnected to VC")
+        except Exception as e:
+            print(f"Reconnect failed: {repr(e)}")
 
 
 # -----------------------------
@@ -113,9 +119,13 @@ async def on_voice_state_update(member, before, after):
 @bot.event
 async def on_ready() -> None:
     await bot.tree.sync()
+
     print(f"Logged in as {bot.user} ({bot.user.id})")
     print("Slash commands synced.")
     print(f"Default prefix: {DEFAULT_PREFIX}")
+
+    # Start VC ONLY after bot is fully ready
+    asyncio.create_task(connect_to_voice())
 
 
 # -----------------------------
@@ -146,17 +156,13 @@ async def on_command_error(ctx: commands.Context, error: Exception) -> None:
 # -----------------------------
 async def main() -> None:
     if not DISCORD_TOKEN:
-        print("Missing DISCORD_TOKEN in .env")
+        print("❌ DISCORD_TOKEN is missing")
         sys.exit(1)
 
     await bot.db.connect()
 
     async with bot:
         await load_extensions()
-
-        # start voice task
-        asyncio.create_task(connect_to_voice())
-
         await bot.start(DISCORD_TOKEN)
 
 
