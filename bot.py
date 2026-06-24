@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import os
 
 import discord
 from discord.ext import commands
@@ -7,6 +8,12 @@ from discord.ext import commands
 from config import DEFAULT_PREFIX, DISCORD_TOKEN, VOICE_CHANNEL_ID
 from database import Database
 
+
+print("=== ENV DEBUG ===")
+print("TOKEN EXISTS:", "DISCORD_TOKEN" in os.environ)
+print("TOKEN LENGTH:", len(os.getenv("DISCORD_TOKEN", "")))
+print("TOKEN FIRST 5:", os.getenv("DISCORD_TOKEN", "")[:5])
+print("=================")
 
 # -----------------------------
 # INTENTS
