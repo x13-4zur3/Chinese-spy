@@ -139,6 +139,45 @@ async def on_voice_state_update(member, before, after):
 
 
 # -----------------------------
+# PRESENCE ROTATION
+# -----------------------------
+def _build_presences() -> list[discord.Activity]:
+    """Builds the rotation of statuses to cycle through.
+    Re-called each cycle so the guild count stays current."""
+    guild_count = len(bot.guilds)
+    return [
+        discord.Activity(type=discord.ActivityType.watching, name=f"{guild_count} servers slowly lose their savings"),
+        discord.Activity(type=discord.ActivityType.playing, name="hide and seek with my source code"),
+        discord.Activity(type=discord.ActivityType.listening, name="the screams of people who went all in"),
+        discord.Activity(type=discord.ActivityType.competing, name="a staring contest with my own database"),
+        discord.Activity(type=discord.ActivityType.watching, name="paint dry, but make it gambling"),
+        discord.Activity(type=discord.ActivityType.playing, name="god, apparently, with everyone's chips"),
+        discord.Activity(type=discord.ActivityType.listening, name="my therapist (I don't have one)"),
+        discord.Activity(type=discord.ActivityType.competing, name="capitalism, and winning"),
+        discord.Activity(type=discord.ActivityType.watching, name="the void watch back"),
+        discord.Activity(type=discord.ActivityType.playing, name="dead inside, but with good uptime"),
+        discord.Activity(type=discord.ActivityType.listening, name="im in your walls"),
+        discord.Activity(type=discord.ActivityType.competing, name="for employee of the month (unpaid)"),
+    ]
+
+
+async def presence_rotation():
+    """Runs forever in the background, cycling the bot's status every 20s."""
+    await bot.wait_until_ready()
+    print("🎭 Presence rotation started")
+
+    while not bot.is_closed():
+        for activity in _build_presences():
+            if bot.is_closed():
+                return
+            try:
+                await bot.change_presence(activity=activity)
+            except Exception as e:
+                print(f"❌ Presence update error: {repr(e)}")
+            await asyncio.sleep(20)
+
+
+# -----------------------------
 # READY EVENT
 # -----------------------------
 @bot.event
@@ -161,6 +200,12 @@ async def on_ready():
     await asyncio.sleep(10)
 
     asyncio.create_task(connect_to_voice())
+
+    # Start the presence rotation ONLY once, guarded against duplicate starts
+    # (on_ready can fire more than once if the gateway reconnects).
+    if not getattr(bot, "_presence_rotation_started", False):
+        bot._presence_rotation_started = True
+        asyncio.create_task(presence_rotation())
 
 # -----------------------------
 # ERROR HANDLER
