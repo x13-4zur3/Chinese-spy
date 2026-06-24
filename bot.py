@@ -162,7 +162,7 @@ def _build_presences() -> list[discord.Activity]:
 
 
 async def presence_rotation():
-    """Runs forever in the background, cycling the bot's status every 20s."""
+    """Runs forever in the background, cycling the bot's status every 15mins."""
     await bot.wait_until_ready()
     print("🎭 Presence rotation started")
 
@@ -174,7 +174,7 @@ async def presence_rotation():
                 await bot.change_presence(activity=activity)
             except Exception as e:
                 print(f"❌ Presence update error: {repr(e)}")
-            await asyncio.sleep(20)
+            await asyncio.sleep(15 * 60)
 
 
 # -----------------------------
