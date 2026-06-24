@@ -10,6 +10,7 @@ from database import Database
 
 
 print("=== ENV DEBUG ===")
+print("BOT STARTUP TEST")
 print("TOKEN EXISTS:", "DISCORD_TOKEN" in os.environ)
 print("TOKEN LENGTH:", len(os.getenv("DISCORD_TOKEN", "")))
 print("TOKEN FIRST 5:", os.getenv("DISCORD_TOKEN", "")[:5])
