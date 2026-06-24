@@ -8,13 +8,8 @@ from discord.ext import commands
 from config import DEFAULT_PREFIX, DISCORD_TOKEN, VOICE_CHANNEL_ID
 from database import Database
 
-
-print("=== ENV DEBUG ===")
-print("BOT STARTUP TEST")
-print("TOKEN EXISTS:", "DISCORD_TOKEN" in os.environ)
-print("TOKEN LENGTH:", len(os.getenv("DISCORD_TOKEN", "")))
-print("TOKEN FIRST 5:", os.getenv("DISCORD_TOKEN", "")[:5])
-print("=================")
+print("=== BOT STARTUP ===")
+print("VOICE_CHANNEL_ID =", VOICE_CHANNEL_ID)
 
 # -----------------------------
 # INTENTS
@@ -76,28 +71,50 @@ async def load_extensions() -> None:
 # VOICE AUTO JOIN
 # -----------------------------
 async def connect_to_voice():
-    await bot.wait_until_ready()
-
-    print("🔊 VC task started")
+    print("=== CONNECT_TO_VOICE STARTED ===")
 
     try:
-        channel = await bot.fetch_channel(VOICE_CHANNEL_ID)
-        print(f"📡 Channel fetched: {channel} ({type(channel)})")
+        await bot.wait_until_ready()
+
+        print(f"VOICE_CHANNEL_ID = {VOICE_CHANNEL_ID}")
+
+        print("Guilds:")
+        for guild in bot.guilds:
+            print(f" - {guild.name} ({guild.id})")
+
+        channel = bot.get_channel(VOICE_CHANNEL_ID)
+
+        print(f"Cached channel: {channel}")
+
+        if channel is None:
+            print("Channel not in cache. Fetching...")
+            channel = await bot.fetch_channel(VOICE_CHANNEL_ID)
+
+        print(f"Fetched channel: {channel}")
+        print(f"Channel type: {type(channel)}")
 
         if not isinstance(channel, discord.VoiceChannel):
-            print("❌ Channel is not a voice channel")
+            print("ERROR: Channel is not a VoiceChannel")
             return
 
+        permissions = channel.permissions_for(channel.guild.me)
+
+        print("Permissions:")
+        print(f" View Channel: {permissions.view_channel}")
+        print(f" Connect: {permissions.connect}")
+        print(f" Speak: {permissions.speak}")
+
         if bot.voice_clients:
-            print("⚠️ Already connected to voice")
+            print("Already connected")
             return
 
         vc = await channel.connect()
-        print(f"✅ Joined VC: {vc.channel.name}")
 
-    except Exception as e:
-        print(f"❌ VC ERROR: {repr(e)}")
+        print(f"SUCCESS: Connected to {vc.channel.name}")
 
+    except Exception:
+        import traceback
+        traceback.print_exc()
 
 # -----------------------------
 # VOICE RECONNECT
@@ -125,16 +142,25 @@ async def on_voice_state_update(member, before, after):
 # READY EVENT
 # -----------------------------
 @bot.event
-async def on_ready() -> None:
-    await bot.tree.sync()
+async def on_ready():
+    print("================================")
+    print("ON_READY FIRED")
+    print("================================")
 
-    print(f"Logged in as {bot.user} ({bot.user.id})")
-    print("Slash commands synced.")
+    try:
+        await bot.tree.sync()
+        print("Slash commands synced")
+    except Exception as e:
+        print(f"Slash sync failed: {e}")
+
+    print(f"Logged in as {bot.user}")
+    print(f"Bot ID: {bot.user.id}")
     print(f"Default prefix: {DEFAULT_PREFIX}")
+    print(f"Voice channel ID: {VOICE_CHANNEL_ID}")
 
-    # Start VC ONLY after bot is fully ready
+    await asyncio.sleep(10)
+
     asyncio.create_task(connect_to_voice())
-
 
 # -----------------------------
 # ERROR HANDLER
@@ -158,6 +184,16 @@ async def on_command_error(ctx: commands.Context, error: Exception) -> None:
 
     raise error
 
+@bot.command()
+async def vc(ctx):
+    try:
+        channel = await bot.fetch_channel(VOICE_CHANNEL_ID)
+
+        await channel.connect()
+
+        await ctx.send("Joined VC")
+    except Exception as e:
+        await ctx.send(f"VC Error: {e}")
 
 # -----------------------------
 # MAIN STARTUP
