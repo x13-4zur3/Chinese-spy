@@ -1,2 +1,37 @@
-*
-!casino.db
+# ===== Virtual environment =====
+venv/
+env/
+.venv/
+
+# ===== Python cache =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ===== Environment variables (VERY IMPORTANT) =====
+.env
+
+# ===== Database files (local dev only) =====
+*.db
+*.sqlite
+*.sqlite3
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+
+# ===== IDE files =====
+.vscode/
+.idea/
+
+# ===== AWS / deployment artifacts =====
+.elasticbeanstalk/
+*.pem
+
+# ===== Node (if ever used) =====
+node_modules/
