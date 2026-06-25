@@ -146,7 +146,7 @@ def _build_presences() -> list[discord.Activity]:
     Re-called each cycle so the guild count stays current."""
     guild_count = len(bot.guilds)
     return [
-        discord.Activity(type=discord.ActivityType.watching, name=f"{guild_count} servers slowly lose their savings"),
+        discord.Activity(type=discord.ActivityType.watching, name=f"{guild_count} server slowly lose their savings"),
         discord.Activity(type=discord.ActivityType.playing, name="hide and seek with my source code"),
         discord.Activity(type=discord.ActivityType.listening, name="the screams of people who went all in"),
         discord.Activity(type=discord.ActivityType.competing, name="a staring contest with my own database"),
