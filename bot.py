@@ -267,13 +267,5 @@ async def main() -> None:
         await load_extensions()
         await bot.start(DISCORD_TOKEN)
 
-
-def main_sync() -> None:
-    """Sync entry point for the `chinese-spy-bot` console script (pyproject.toml).
-    Just wraps the existing async main() — running this file directly with
-    `python bot.py` still works exactly as before via the block below."""
-    asyncio.run(main())
-
-
 if __name__ == "__main__":
     asyncio.run(main())
