@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import os
+import random
 
 import discord
 from discord.ext import commands
@@ -141,28 +142,35 @@ async def on_voice_state_update(member, before, after):
 # -----------------------------
 # PRESENCE ROTATION
 # -----------------------------
+_bot_start_time = None  # set once in on_ready
+
+
 def _build_presences() -> list[discord.Activity]:
     """Builds the rotation of statuses to cycle through.
     Re-called each cycle so the guild count stays current."""
     guild_count = len(bot.guilds)
     return [
-        discord.Activity(type=discord.ActivityType.watching, name=f"{guild_count} server slowly lose their savings"),
+        discord.Activity(type=discord.ActivityType.watching, name=f"{guild_count} servers slowly lose their savings"),
         discord.Activity(type=discord.ActivityType.playing, name="hide and seek with my source code"),
         discord.Activity(type=discord.ActivityType.listening, name="the screams of people who went all in"),
         discord.Activity(type=discord.ActivityType.competing, name="a staring contest with my own database"),
         discord.Activity(type=discord.ActivityType.watching, name="paint dry, but make it gambling"),
-        discord.Activity(type=discord.ActivityType.playing, name="god, apparently, with everyone's chips"),
+        # start= makes Discord show a live "X elapsed" timer next to this one
+        discord.Activity(type=discord.ActivityType.playing, name="god, apparently, with everyone's chips", start=_bot_start_time),
         discord.Activity(type=discord.ActivityType.listening, name="my therapist (I don't have one)"),
         discord.Activity(type=discord.ActivityType.competing, name="capitalism, and winning"),
         discord.Activity(type=discord.ActivityType.watching, name="the void watch back"),
-        discord.Activity(type=discord.ActivityType.playing, name="dead inside, but with good uptime"),
+        # another timed one, so the elapsed counter shows up twice per loop
+        discord.Activity(type=discord.ActivityType.playing, name="dead inside, but with good uptime", start=_bot_start_time),
         discord.Activity(type=discord.ActivityType.listening, name="im in your walls"),
         discord.Activity(type=discord.ActivityType.competing, name="for employee of the month (unpaid)"),
+        # plain custom status — no "Playing/Watching/etc" verb, just emoji + text
+        discord.CustomActivity(name="certified menace to society", emoji="💀"),
     ]
 
 
 async def presence_rotation():
-    """Runs forever in the background, cycling the bot's status every 15mins."""
+    """Runs forever in the background, cycling the bot's status every 15m."""
     await bot.wait_until_ready()
     print("🎭 Presence rotation started")
 
@@ -174,7 +182,7 @@ async def presence_rotation():
                 await bot.change_presence(activity=activity)
             except Exception as e:
                 print(f"❌ Presence update error: {repr(e)}")
-            await asyncio.sleep(15 * 60)
+            await asyncio.sleep(900)
 
 
 # -----------------------------
@@ -196,6 +204,11 @@ async def on_ready():
     print(f"Bot ID: {bot.user.id}")
     print(f"Default prefix: {DEFAULT_PREFIX}")
     print(f"Voice channel ID: {VOICE_CHANNEL_ID}")
+
+    global _bot_start_time
+    if _bot_start_time is None:
+        import datetime
+        _bot_start_time = datetime.datetime.now(datetime.timezone.utc)
 
     await asyncio.sleep(10)
 
