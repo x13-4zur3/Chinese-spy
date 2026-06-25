@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chinese-spy-bot"
+version = "1.0.0"
+description = "A Discord casino/economy bot with voice presence, slash commands, and games."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [
+    { name = "x13-4zur3" }
+]
+
+dependencies = [
+    "discord.py>=2.6.0",
+    "python-dotenv>=1.0.1",
+    "aiosqlite>=0.20.0",
+    "treys>=0.1.8",
+    "boto3",
+    "PyNaCl>=1.5.0",
+    "davey>=0.1.0",
+]
+
+[project.scripts]
+chinese-spy-bot = "bot:main_sync"
+
+# Flat module layout: these are loose top-level .py files, not a package
+# directory, so we list them individually with py-modules instead of
+# letting setuptools auto-discover a package folder.
+[tool.setuptools]
+py-modules = ["bot", "config", "database"]
+
+# The cogs/ folder IS a real package (has __init__.py), so it's discovered
+# normally rather than listed as a flat module.
+[tool.setuptools.packages.find]
+include = ["cogs*"]
