@@ -184,5 +184,26 @@ pip install -r requirements.txt</code></pre>
     </div>
 
     <script src="script.js"></script>
+
+    <!-- Load the Discord Embedded App SDK via a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk"></script>
+
+    <script>
+      // Instantiate the SDK using your Discord App Client ID
+      // (Find this on the general information page of your Developer Portal)
+      const discordSdk = new Discord.DiscordSDK("YOUR_APP_CLIENT_ID_HERE");
+
+      async function setupDiscord() {
+        try {
+          // This tells Discord your dashboard has successfully loaded inside the iframe
+          await discordSdk.ready();
+          console.log("Discord SDK is ready!");
+        } catch (error) {
+          console.error("Failed to initialize Discord SDK:", error);
+        }
+      }
+
+      setupDiscord();
+    </script>
   </body>
 </html>
